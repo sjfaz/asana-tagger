@@ -4,7 +4,7 @@ let results = { _response: { next_page: { offset: "start" } } };
 let untagged = [];
 let messages = [];
 let start = 0;
-let max = 10;
+let max = 20;
 let totalCount = 0;
 const STACKOVERFLOW_KEY = process.env.STACKOVERFLOW_KEY;
 const ASANA_PAT = process.env.ASANA_PAT;
@@ -14,10 +14,11 @@ const LINK_CODE = "1201993867608143";
 const NOT_FOUND_CODE = "1202225109115305";
 const AUTO_CODE = "1202489324805983";
 const TRUE_CODE = "1202489324805984";
+const DATE_CODE = "1201993867608145";
 const client = asana.Client.create().useAccessToken(ASANA_PAT);
 
 // 1: Loop through the paginated response of asana for a list of project tasks.
-// 2: Collect all the un-categorised tasks to loop through
+// 2: Collect all the un-tagged tasks to loop through
 // 3: Visit the link and see if there is no longer a question to answer
 // 4: Tag the task with the appropriate name ("NotFound")
 // 5: Also tag as auto-tagged = TRUE so we know it was auto-tagged
@@ -56,15 +57,16 @@ async function main() {
   for (let ut of untagged) {
     console.log(counter);
     const link = ut.custom_fields.filter((l) => l.gid === LINK_CODE);
+    const date = ut.custom_fields.filter((l) => l.gid === DATE_CODE);
     if (link[0].text_value === null) {
       console.log("Skip repost");
     } else {
       await processStackOverflow(ut, link, messages);
     }
-    console.log(JSON.stringify(ut, null, 2));
+    console.log(`Date: ${date[0].text_value}`);
     counter++;
   }
-  console.log(messages);
+  console.log(`Updated ${messages.length} messages`);
 }
 
 async function processStackOverflow(ut, link, messages) {
@@ -75,9 +77,10 @@ async function processStackOverflow(ut, link, messages) {
     await client.tasks.updateTask(ut.gid, {
       custom_fields: { [CAT_CODE]: NOT_FOUND_CODE, [AUTO_CODE]: TRUE_CODE },
     });
+    console.log("Tag as NOTFOUND");
+    //console.log(JSON.stringify(ut, null, 2));
     messages.push(segments[4]);
   }
-
   const waitTime = resp.data.backoff ? (resp.data.backoff + 1) * 1000 : 200;
   await new Promise((resolve) => setTimeout(resolve, waitTime)); // Stop backoff violation error
 }
