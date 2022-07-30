@@ -2,6 +2,7 @@ var asana = require("asana");
 var axios = require("axios");
 let results = { _response: { next_page: { offset: "start" } } };
 let untagged = [];
+let allResults = [];
 let messages = [];
 let start = 0;
 let max = 20;
@@ -39,6 +40,7 @@ async function main() {
     results = await client.projects.tasks(PROJECT_CODE, params);
     // untagged = [...untagged, results._response.data.filter( r => r.custom_fields )]
     results._response.data.forEach((task) => {
+      allResults.push(task);
       const tags = task.custom_fields.filter((cf) => cf.gid === CAT_CODE);
       if (tags.length > 0) {
         if (tags[0].enum_value === null) {
@@ -52,6 +54,7 @@ async function main() {
     console.log("total count: ", totalCount);
     console.log("untagged count: ", untagged.length);
   }
+  // checkDuplicates(allResults);
   console.log("process untagged: ", untagged.length);
   let counter = 0;
   for (let ut of untagged) {
@@ -84,5 +87,23 @@ async function processStackOverflow(ut, link, messages) {
   const waitTime = resp.data.backoff ? (resp.data.backoff + 1) * 1000 : 200;
   await new Promise((resolve) => setTimeout(resolve, waitTime)); // Stop backoff violation error
 }
+
+// function checkDuplicates(allResults) {
+//   console.log("res len:", allResults.length);
+//   //console.log("res:", JSON.stringify(allResults, null, 2));
+//   const links = results.data.map((d) => {
+//     return d.name;
+//   });
+//   console.log("link:", links.length);
+//   const set = new Set(links);
+//   const duplicates = links.filter((item) => {
+//     if (set.has(item)) {
+//       set.delete(item);
+//     } else {
+//       return item;
+//     }
+//   });
+//   console.log("dup:", duplicates);
+// }
 
 main();
