@@ -18,6 +18,7 @@ const client = asana.Client.create().useAccessToken(ASANA_PAT);
 // 3: Visit the link and see if there is no longer a question to answer
 // 4: Tag the task with the appropriate name ("NotFound")
 // 5: Also tag as auto-tagged = TRUE so we know it was auto-tagged
+// TODO: Develop rules further then tag any unknown as misc
 
 async function main(job) {
   console.log("START");
